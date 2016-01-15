@@ -26,23 +26,36 @@ package net.imagej.ui.swing.ops;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.tree.TreePath;
 
 import net.imagej.ops.Namespace;
 import net.imagej.ops.Op;
@@ -52,7 +65,9 @@ import net.imagej.ops.OpUtils;
 
 import org.jdesktop.swingx.JXTreeTable;
 import org.scijava.Context;
+import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
+import org.scijava.platform.PlatformService;
 import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
 
@@ -86,6 +101,12 @@ public class OpViewer extends JFrame implements DocumentListener {
 	private JXTreeTable treeTable;
 	private OpTreeTableModel model;
 
+	// Caching TreePaths
+	private Set<TreePath> expandedPaths;
+
+	@Parameter
+	private StatusService statusService;
+
 	@Parameter
 	private OpService opService;
 
@@ -95,9 +116,14 @@ public class OpViewer extends JFrame implements DocumentListener {
 	@Parameter
 	private LogService logService;
 
+	@Parameter
+	private PlatformService platformService;
+
 	public OpViewer(final Context context) {
 		super("Op Viewer");
 		context.inject(this);
+
+		expandedPaths = new HashSet<>();
 
 		// Load the frame size
 		loadPreferences();
@@ -136,6 +162,29 @@ public class OpViewer extends JFrame implements DocumentListener {
 		final JPanel panel = new JPanel();
 		panel.add(label);
 		panel.add(prompt);
+
+		panel.add(new JSeparator(SwingConstants.VERTICAL));
+
+		// Build buttons
+		final JButton runButton = new JButton("Run");
+		final JButton snippetButton = new JButton("Snippet");
+		final JButton wikiButton = new JButton("Learn more");
+
+		runButton.setToolTipText("Run the Op selected below");
+		runButton.addActionListener(new RunButtonListener());
+
+		snippetButton.setToolTipText("Copy the selected code snippet to your clipboard (e.g. for use in the script editor)");
+		snippetButton.addActionListener(new SnippetButtonListener());
+
+		wikiButton.setToolTipText("Learn more about ImageJ Ops");
+		wikiButton.addActionListener(new WikiButtonListener());
+
+		panel.add(runButton);
+		panel.add(snippetButton);
+
+		panel.add(new JSeparator(SwingConstants.VERTICAL));
+
+		panel.add(wikiButton);
 
 		prompt.getDocument().addDocumentListener(this);
 
@@ -209,10 +258,12 @@ public class OpViewer extends JFrame implements DocumentListener {
 		try {
 			final String text = doc.getText(0, doc.getLength());
 
-			if (text == null || text.isEmpty())
-				//TODO node expansion is not preserved..
+			if (text == null || text.isEmpty()) {
 				treeTable.setTreeTableModel(model);
+				restoreExpandedPaths();
+			}
 			else {
+				cacheExpandedPaths();
 				OpTreeTableModel tempModel = new OpTreeTableModel();
 				createNodes(tempModel.getRoot(), text);
 				treeTable.setTreeTableModel(tempModel);
@@ -221,6 +272,34 @@ public class OpViewer extends JFrame implements DocumentListener {
 			}
 		} catch (final BadLocationException exc) {
 			logService.error(exc);
+		}
+	}
+
+	/**
+	 * Expand all cached TreePaths and clear the cache.
+	 */
+	private void restoreExpandedPaths() {
+		for (final TreePath path : expandedPaths) {
+			treeTable.expandPath(path);
+		}
+
+		expandedPaths.clear();
+	}
+
+	/**
+	 * If they are not already cached, check which paths are expanded and
+	 * cache them for future restoration.
+	 */
+	private void cacheExpandedPaths() {
+		// If paths have already been cached we don't need to do anything.
+		// Paths are only cached when filtering, and restored when done
+		// filtering.
+		if (!expandedPaths.isEmpty()) return;
+
+		// Find and cache the expanded paths
+		for (int i=0; i<treeTable.getRowCount(); i++) {
+			if (treeTable.isExpanded(i))
+				expandedPaths.add(treeTable.getPathForRow(i));
 		}
 	}
 
@@ -235,6 +314,10 @@ public class OpViewer extends JFrame implements DocumentListener {
 		createNodes(root, null);
 	}
 
+	/**
+	 * As {@link #createNodes(OpTreeTableNode)} with an option filter to restrict
+	 * nodes matched.
+	 */
 	private void createNodes(final OpTreeTableNode root, final String filter) {
 		final String filterLC = filter == null ? "" : filter.toLowerCase();
 		final OpTreeTableNode parent = new OpTreeTableNode("ops", "# @OpService ops;",
@@ -277,6 +360,13 @@ public class OpViewer extends JFrame implements DocumentListener {
 					// Create a leaf node for this particular Op's signature
 					final OpTreeTableNode opSignature = new OpTreeTableNode(
 							simpleName, codeCall, delegateClass);
+
+					try {
+						opSignature.setOpName(OpUtils.getOpName(info.cInfo()));
+					} catch (NoSuchFieldException | SecurityException | InstantiationException | IllegalAccessException
+							| ClassNotFoundException exc) {
+						logService.warn("No Op name found for: " + info);
+					}
 
 					opCategory.add(opSignature);
 				}
@@ -348,5 +438,74 @@ public class OpViewer extends JFrame implements DocumentListener {
 		}
 
 		return nsCategory;
+	}
+
+	/**
+	 * Button action listener to open the ImageJ Ops wiki page
+	 */
+	private class WikiButtonListener extends OpsViewerButtonListener {
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			try {
+				platformService.open(new URL("http://imagej.net/ImageJ_Ops"));
+			} catch (final IOException exc) {
+				logService.error(exc);
+			}
+		}
+	}
+
+	/**
+	 * Button action listener to copy selected row's code snippet to clipboard
+	 */
+	private class SnippetButtonListener extends OpsViewerButtonListener {
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			final OpTreeTableNode selectedNode = getSelectedNode();
+
+			String codeCall;
+
+			if (selectedNode == null || (codeCall = selectedNode.getCodeCall()).isEmpty()) {
+				statusService.clearStatus();
+				statusService.showStatus("No code to copy (is an Op row selected?)");
+			} else {
+				statusService.showStatus("Op copied to clipboard!");
+				final StringSelection stringSelection = new StringSelection(codeCall);
+				final Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+				clpbrd.setContents(stringSelection, null);
+			}
+		}
+	}
+
+	/**
+	 * Button action listener to run the selected row's code snippet via the
+	 * {@link OpService}.
+	 */
+	private class RunButtonListener extends OpsViewerButtonListener {
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			final OpTreeTableNode selectedNode = getSelectedNode();
+
+			String code;
+
+			if (selectedNode == null || (code = selectedNode.getOpName()).isEmpty()) {
+				statusService.clearStatus();
+				statusService.showStatus("No Op selected or Op name not found");
+			} else {
+				opService.run(code);
+			}
+		}
+	}
+
+	/**
+	 * Abstract helper class for button {@link ActionListener}s
+	 */
+	private abstract class OpsViewerButtonListener implements ActionListener {
+		public OpTreeTableNode getSelectedNode() {
+			final int row = treeTable.getSelectedRow();
+			if (row < 0) return null;
+
+			final TreePath path = treeTable.getPathForRow(row);
+			return (OpTreeTableNode) path.getPath()[path.getPathCount()-1];
+		}
 	}
 }

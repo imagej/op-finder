@@ -30,6 +30,7 @@ public class OpTreeTableNode {
 	private String simpleName = "";
 	private String referenceClass = "";
 	private String codeCall = "";
+	private String opName = "";
 	private List<OpTreeTableNode> children = new ArrayList<>();
 
 	/**
@@ -84,4 +85,16 @@ public class OpTreeTableNode {
 	public String toString() {
 		return getName();
 	}
+<<<<<<< HEAD
 }
+=======
+
+	public void setOpName(final String simpleName) {
+		this.opName = simpleName;
+	}
+
+	public String getOpName() {
+		return opName;
+	}
+}
+>>>>>>> 3e07c9e... Add toolbar buttons
