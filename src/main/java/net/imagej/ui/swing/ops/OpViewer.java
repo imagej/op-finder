@@ -24,15 +24,25 @@
 
 package net.imagej.ui.swing.ops;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 import net.imagej.ops.Namespace;
 import net.imagej.ops.Op;
@@ -42,6 +52,7 @@ import net.imagej.ops.OpUtils;
 
 import org.jdesktop.swingx.JXTreeTable;
 import org.scijava.Context;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
 
@@ -58,7 +69,7 @@ import org.scijava.prefs.PrefService;
  * @author Mark Hiner <hinerm@gmail.com>
  */
 @SuppressWarnings("serial")
-public class OpViewer extends JFrame {
+public class OpViewer extends JFrame implements DocumentListener {
 
 	public static final int DEFAULT_WINDOW_WIDTH = 800;
 	public static final int DEFAULT_WINDOW_HEIGHT = 700;
@@ -70,11 +81,19 @@ public class OpViewer extends JFrame {
 	// Sizing fields
 	private int[] widths;
 
+	// Child elements
+	private JTextField prompt;
+	private JXTreeTable treeTable;
+	private OpTreeTableModel model;
+
 	@Parameter
 	private OpService opService;
 
 	@Parameter
 	private PrefService prefService;
+
+	@Parameter
+	private LogService logService;
 
 	public OpViewer(final Context context) {
 		super("Op Viewer");
@@ -83,18 +102,13 @@ public class OpViewer extends JFrame {
 		// Load the frame size
 		loadPreferences();
 
-		final OpTreeTableModel model = new OpTreeTableModel();
+		model = new OpTreeTableModel();
 		widths = new int[model.getColumnCount()];
 
-		// Root of the TreeTable
-		final OpTreeTableNode root = new OpTreeTableNode("Available Ops", "# @OpService ops;",
-				"net.imagej.ops.OpService");
-		model.getRoot().add(root);
-
 		// Populate the nodes
-		createNodes(root);
+		createNodes(model.getRoot());
 
-		final JXTreeTable treeTable = new JXTreeTable(model);
+		treeTable = new JXTreeTable(model);
 		treeTable.setColumnMargin(COLUMN_MARGIN);
 
 		// Allow rows to be selected
@@ -106,21 +120,31 @@ public class OpViewer extends JFrame {
 		// Update dimensions
 		final Dimension dims = new Dimension(getSize());
 		int preferredWidth = 0;
-		for (int i : widths) preferredWidth += (i + COLUMN_MARGIN);
+		for (int i : widths)
+			preferredWidth += (i + COLUMN_MARGIN);
 		dims.setSize(preferredWidth, DEFAULT_WINDOW_HEIGHT);
 		setPreferredSize(dims);
 
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		for (int i=0; i<model.getColumnCount(); i++) {
+		for (int i = 0; i < model.getColumnCount(); i++) {
 			treeTable.getColumn(i).setPreferredWidth(widths[i]);
 		}
 
-		// Make the treetable scrollable
-		final JScrollPane pane = new JScrollPane(treeTable,
-			ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-			ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		// Build search panel
+		prompt = new JTextField("", 20);
+		final JLabel label = new JLabel("Filter Ops:  ");
+		final JPanel panel = new JPanel();
+		panel.add(label);
+		panel.add(prompt);
 
-		setContentPane(pane);
+		prompt.getDocument().addDocumentListener(this);
+
+		// Add panel
+		add(panel, BorderLayout.NORTH);
+
+		// Add table and make it scrollable
+		add(new JScrollPane(treeTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
 
 		try {
 			if (SwingUtilities.isEventDispatchThread()) {
@@ -163,12 +187,60 @@ public class OpViewer extends JFrame {
 			prefService.getInt(WINDOW_HEIGHT, dim.height)));
 	}
 
+	// -- DocumentListener methods --
+
+	@Override
+	public void insertUpdate(final DocumentEvent e) {
+		filterOps(e);
+	}
+
+	@Override
+	public void removeUpdate(final DocumentEvent e) {
+		filterOps(e);
+	}
+
+	@Override
+	public void changedUpdate(final DocumentEvent e) {
+		filterOps(e);
+	}
+
+	private void filterOps(final DocumentEvent e) {
+		final Document doc = e.getDocument();
+		try {
+			final String text = doc.getText(0, doc.getLength());
+
+			if (text == null || text.isEmpty())
+				//TODO node expansion is not preserved..
+				treeTable.setTreeTableModel(model);
+			else {
+				OpTreeTableModel tempModel = new OpTreeTableModel();
+				createNodes(tempModel.getRoot(), text);
+				treeTable.setTreeTableModel(tempModel);
+
+				treeTable.expandAll();
+			}
+		} catch (final BadLocationException exc) {
+			logService.error(exc);
+		}
+	}
+
+	// -- Helper methods --
+
 	/**
 	 * Helper method to populate the {@link Op} nodes. Ops without a valid name
 	 * will be skipped. Ops with no namespace will be put in a
 	 * {@link #NO_NAMESPACE} category.
 	 */
-	private void createNodes(final OpTreeTableNode parent) {
+	private void createNodes(final OpTreeTableNode root) {
+		createNodes(root, null);
+	}
+
+	private void createNodes(final OpTreeTableNode root, final String filter) {
+		final String filterLC = filter == null ? "" : filter.toLowerCase();
+		final OpTreeTableNode parent = new OpTreeTableNode("ops", "# @OpService ops;",
+						"net.imagej.ops.OpService");
+		root.add(parent);
+
 		// Map namespaces and ops to their parent tree node
 		final Map<String, OpTreeTableNode> namespaces =
 			new HashMap<>();
@@ -191,19 +263,47 @@ public class OpViewer extends JFrame {
 				final OpTreeTableNode opCategory = getCategory(nsCategory, ops,
 					opName);
 
-				final String simpleName = OpUtils.simpleString(info.cInfo());
-				final String codeCall = OpUtils.opCall(info.cInfo());
 				final String delegateClass = info.cInfo().getDelegateClassName();
+				//NB: FILTERING here
+				final String opClass = info.cInfo().getAnnotation().type().getSimpleName().toLowerCase();
+				final String simpleDelegate = delegateClass
+						.substring(delegateClass.lastIndexOf("."), delegateClass.length()).toLowerCase();
+				if (filterLC.isEmpty() || opClass.contains(filterLC) || simpleDelegate.contains(filterLC)) {
+					final String simpleName = OpUtils.simpleString(info.cInfo());
+					final String codeCall = OpUtils.opCall(info.cInfo());
 
-				updateWidths(widths, simpleName, codeCall, delegateClass);
+					updateWidths(widths, simpleName, codeCall, delegateClass);
 
-				// Create a leaf node for this particular Op's signature
-				final OpTreeTableNode opSignature = new OpTreeTableNode(
-					simpleName, codeCall, delegateClass);
+					// Create a leaf node for this particular Op's signature
+					final OpTreeTableNode opSignature = new OpTreeTableNode(
+							simpleName, codeCall, delegateClass);
 
-				opCategory.add(opSignature);
+					opCategory.add(opSignature);
+				}
 			}
 		}
+
+		pruneEmptyNodes(root);
+	}
+
+	/**
+	 * Recursively any node that a) has no children, and b) has no "ReferenceClass" field
+	 *
+	 * @return true if this node should be removed from the child list.
+	 */
+	private boolean pruneEmptyNodes(final OpTreeTableNode node) {
+		boolean removeThis = node.getCodeCall().isEmpty();
+		final List<OpTreeTableNode> preservedChildren = new ArrayList<>();
+
+		for (final OpTreeTableNode child : node.getChildren()) {
+			if (!pruneEmptyNodes(child)) preservedChildren.add(child);
+		}
+
+		node.getChildren().retainAll(preservedChildren);
+
+		removeThis &= node.getChildren().isEmpty();
+
+		return removeThis;
 	}
 
 	/**

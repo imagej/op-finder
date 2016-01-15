@@ -27,11 +27,9 @@ import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 public class OpTreeTableModel extends AbstractTreeTableModel 
 {
-	private OpTreeTableNode myroot;
-	
-	public OpTreeTableModel()
+	public OpTreeTableModel(final String...strings)
 	{
-		myroot = new OpTreeTableNode();
+		root = new OpTreeTableNode(strings);
 	}
 
 	@Override
@@ -46,7 +44,7 @@ public class OpTreeTableModel extends AbstractTreeTableModel
 		switch( column )
 		{
 		case 0: return "Op signature";
-		case 1: return "Code to use";
+		case 1: return "Code snippet";
 		case 2: return "Defined in class";
 		default: return "Unknown";
 		}
@@ -108,7 +106,7 @@ public class OpTreeTableModel extends AbstractTreeTableModel
 	 @Override
 	 public OpTreeTableNode getRoot()
 	 {
-		 return myroot;
+		 return (OpTreeTableNode)super.getRoot();
 	 }
 }
 
