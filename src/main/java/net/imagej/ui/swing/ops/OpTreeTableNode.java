@@ -24,11 +24,12 @@
 package net.imagej.ui.swing.ops;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.scijava.command.CommandInfo;
 
-public class OpTreeTableNode {
+public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	private String simpleName = "";
 	private String referenceClass = "";
 	private String codeCall = "";
@@ -79,17 +80,15 @@ public class OpTreeTableNode {
 		return children;
 	}
 
-	public void add(OpTreeTableNode child) {
-		children.add(child);
+	public void add(final OpTreeTableNode child) {
+		int index = -(Collections.binarySearch(children, child)+1);
+		children.add(index, child);
 	}
 
 	@Override
 	public String toString() {
 		return getName();
 	}
-<<<<<<< HEAD
-}
-=======
 
 	public void setCommandInfo(final CommandInfo info) {
 		this.info = info;
@@ -98,5 +97,13 @@ public class OpTreeTableNode {
 	public CommandInfo getCommandInfo() {
 		return info;
 	}
+
+	// -- Comparable api --
+
+	@Override
+	public int compareTo(final OpTreeTableNode o) {
+		final int v = simpleName.compareTo(o.simpleName);
+		// sort by simple name first, then by reference class
+		return v != 0 ? v : referenceClass.compareTo(o.referenceClass);
+	}
 }
->>>>>>> 3e07c9e... Add toolbar buttons
