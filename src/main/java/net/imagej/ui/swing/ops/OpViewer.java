@@ -118,6 +118,8 @@ public class OpViewer extends JFrame implements DocumentListener, ActionListener
 	// Icons
 	private ImageIcon opFail;
 	private ImageIcon opSuccess;
+	private ImageIcon expandDetails;
+	private ImageIcon hideDetails;
 
 	// Caching TreePaths
 	private Set<TreePath> expandedPaths;
@@ -357,7 +359,9 @@ public class OpViewer extends JFrame implements DocumentListener, ActionListener
 	 */
 	private JPanel buildBottomPanel() {
 		final JPanel panelBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		toggleDetailsButton = new JButton("<  >");
+		hideDetails = new ImageIcon(getClass().getResource("/icons/opbrowser/arrow_left.png"));
+		expandDetails = new ImageIcon(getClass().getResource("/icons/opbrowser/arrow_right.png"));
+		toggleDetailsButton = new JButton(hideDetails);
 		toggleDetailsButton.setPreferredSize(new Dimension(32, 32));
 		toggleDetailsButton.setToolTipText("Show / Hide Details");
 		toggleDetailsButton.addActionListener(this);
@@ -422,12 +426,14 @@ public class OpViewer extends JFrame implements DocumentListener, ActionListener
 			if (detailsPane.isVisible()) {
 				newWidth -= detailsPane.getWidth();
 				detailsPane.setVisible(false);
+				toggleDetailsButton.setIcon(expandDetails);
 			} else {
 				detailsPane.setVisible(true);
 				newWidth += detailsPane.getPreferredSize().getWidth();
+				toggleDetailsButton.setIcon(hideDetails);
 			}
 
-			setSize(newWidth, getHeight());
+				setSize(newWidth, getHeight());
 		}
 	}
 
