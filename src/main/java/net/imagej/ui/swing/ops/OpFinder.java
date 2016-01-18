@@ -391,7 +391,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private void buildTopPanel() {
 		final int searchWidth = 250;
 		prompt = new JTextField(searchWidth);
-		final JLabel searchLabel = new JLabel("Filter Ops:  ");
+		final JLabel searchLabel = new JLabel("Filter Ops by Class:  ");
 		mainPane.add(searchLabel);
 		mainPane.add(prompt, "w " + searchWidth + "!");
 
@@ -699,10 +699,10 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		}
 
 		// iterate over all substring lengths
-		for (int i = 1; i <= strOfInterest.length(); i++) {
+		for (int start = 0; start < strOfInterest.length() - 1; start++) {
 			// iterate over all substring positions
-			for (int j = 0; j < strOfInterest.length() - (i + 1); j++) {
-				substringsToCheck.add(strOfInterest.substring(j, j + i));
+			for (int end = start + 1; end <= strOfInterest.length(); end++) {
+				substringsToCheck.add(strOfInterest.substring(start, end));
 			}
 		}
 
