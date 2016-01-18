@@ -57,6 +57,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
@@ -115,19 +116,25 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	public static final String NO_NAMESPACE = "(global)";
 	public static final String BASE_JAVADOC_URL = "http://javadoc.imagej.net/ImageJ/";
 
+	// Simple mode
+	private boolean simple = true;
+	private ModeButton modeButton;
+	private JLabel searchLabel;
+
 	// Sizing fields
 	private int[] widths;
 
 	// Child elements
-	private JTextField prompt;
+	private JTextField searchField;
 	private JXTreeTable treeTable;
-	private OpTreeTableModel model;
 	private JLabel successLabel = null;
 	private JEditorPane textPane;
 	private JScrollPane detailsPane;
 	private JButton toggleDetailsButton;
 	private JPanel mainPane;
 	private JSplitPane splitPane;
+	private OpTreeTableModel advModel;
+	private OpTreeTableModel smplModel;
 
 	// Icons
 	private ImageIcon opFail;
@@ -136,13 +143,15 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private ImageIcon hideDetails;
 
 	// Caching TreePaths
-	private Set<TreePath> expandedPaths;
+	private Set<TreePath> advExpandedPaths;
+	private Set<TreePath> smplExpandedPaths;
 
 	// Caching web elements
 	private Map<String, Elements> elementsMap;
 
 	// Cache tries for matching
-	private Map<Trie, OpTreeTableNode> tries;
+	private Map<Trie, OpTreeTableNode> advTries;
+	private Map<Trie, OpTreeTableNode> smplTries;
 
 	// For hiding the successLabel
 	private Timer timer;
@@ -176,7 +185,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		initialize();
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		mainPane = new JPanel(new MigLayout("", "[][][][][][grow, right]","[grow]"));
+		//NB top panel defines column count
+		mainPane = new JPanel(new MigLayout("", "[][][][][][][grow, right]","[grow]"));
 
 		// Build search panel
 		buildTopPanel();
@@ -203,11 +213,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * 
 	 */
 	private void initialize() {
-		expandedPaths = new HashSet<>();
+		advExpandedPaths = new HashSet<>();
+		smplExpandedPaths = new HashSet<>();
 		elementsMap = new HashMap<>();
-		tries = new HashMap<>();
-		model = new OpTreeTableModel();
-		widths = new int[model.getColumnCount()];
+		advTries = new HashMap<>();
+		smplTries = new HashMap<>();
+		advModel = new OpTreeTableModel(false);
+		smplModel = new OpTreeTableModel(true);
+		widths = new int[advModel.getColumnCount()];
 		taskPerformer = new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent evt) {
@@ -222,10 +235,10 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private void buildTreeTable() {
 		// Populate the nodes
-		createNodes(model.getRoot());
+		createNodes();
 
 		// per-cell tool-tips
-		treeTable = new JXTreeTable(model) {
+		treeTable = new JXTreeTable(simple ? smplModel : advModel) {
 			// Adapted from:
 			// http://stackoverflow.com/a/21281257/1027800
 			@Override
@@ -389,13 +402,15 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * TODO
 	 */
 	private void buildTopPanel() {
-		final int searchWidth = 250;
-		prompt = new JTextField(searchWidth);
-		final JLabel searchLabel = new JLabel("Filter Ops by Class:  ");
-		mainPane.add(searchLabel);
-		mainPane.add(prompt, "w " + searchWidth + "!");
+		final int searchWidth = 160;
+		searchField = new JTextField(searchWidth);
+		searchLabel = new JLabel();
+		searchLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		mainPane.add(searchLabel, "w 145!");
+		mainPane.add(searchField, "w " + searchWidth + "!");
 
 		// Build buttons
+		modeButton = new ModeButton();
 		final JButton runButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/play.png")));
 		final JButton snippetButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/paperclip.png")));
 		final JButton wikiButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/globe.png")));
@@ -411,7 +426,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		wikiButton.setToolTipText("Learn more about ImageJ Ops");
 		wikiButton.addActionListener(new WikiButtonListener());
 
-		mainPane.add(runButton, "w 32!, h 32!, gapleft 32");
+		mainPane.add(modeButton, "w 150!, h 32!, gapleft 20");
+		mainPane.add(runButton, "w 32!, h 32!, gapleft 20");
 		mainPane.add(snippetButton, "w 32!, h 32!");
 		mainPane.add(wikiButton, "w 32!, h 32!");
 
@@ -423,7 +439,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 		mainPane.add(successLabel, "h 20!, gapright 6, wrap");
 
-		prompt.getDocument().addDocumentListener(this);	
+		searchField.getDocument().addDocumentListener(this);
 	}
 
 	/**
@@ -521,17 +537,21 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private void filterOps(final DocumentEvent e) {
 		final Document doc = e.getDocument();
+		filterOps(doc);
+	}
+
+	private void filterOps(final Document doc) {
 		try {
 			final String text = doc.getText(0, doc.getLength());
 
 			if (text == null || text.isEmpty()) {
-				treeTable.setTreeTableModel(model);
-				restoreExpandedPaths();
-			}
-			else {
-				cacheExpandedPaths();
-				OpTreeTableModel tempModel = new OpTreeTableModel();
-				tempModel.getRoot().add(applyFilter(text.toLowerCase(Locale.getDefault())));
+				treeTable.setTreeTableModel(simple ? smplModel : advModel);
+				restoreExpandedPaths(simple);
+			} else {
+				cacheExpandedPaths(simple);
+				OpTreeTableModel tempModel = new OpTreeTableModel(simple);
+				tempModel.getRoot()
+						.add(applyFilter(text.toLowerCase(Locale.getDefault()), simple ? smplTries : advTries));
 				treeTable.setTreeTableModel(tempModel);
 
 				treeTable.expandAll();
@@ -544,28 +564,36 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	/**
 	 * Expand all cached TreePaths and clear the cache.
 	 */
-	private void restoreExpandedPaths() {
-		for (final TreePath path : expandedPaths) {
-			treeTable.expandPath(path);
-		}
+	private void restoreExpandedPaths(final boolean isSimple) {
+		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
 
-		expandedPaths.clear();
+		if (paths.isEmpty()) {
+			// expand top row by default
+			treeTable.expandRow(0);
+		}
+		else {
+			for (final TreePath path : paths) {
+				treeTable.expandPath(path);
+			}
+
+			paths.clear();
+		}
 	}
 
 	/**
 	 * If they are not already cached, check which paths are expanded and
 	 * cache them for future restoration.
 	 */
-	private void cacheExpandedPaths() {
+	private void cacheExpandedPaths(final boolean isSimple) {
+		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
+
 		// If paths have already been cached we don't need to do anything.
-		// Paths are only cached when filtering, and restored when done
-		// filtering.
-		if (!expandedPaths.isEmpty()) return;
+		if (!paths.isEmpty()) return;
 
 		// Find and cache the expanded paths
 		for (int i=0; i<treeTable.getRowCount(); i++) {
 			if (treeTable.isExpanded(i))
-				expandedPaths.add(treeTable.getPathForRow(i));
+				paths.add(treeTable.getPathForRow(i));
 		}
 	}
 
@@ -574,7 +602,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	/**
 	 * TODO
 	 */
-	private OpTreeTableNode applyFilter(final String filter) {
+	private OpTreeTableNode applyFilter(final String filter, final Map<Trie, OpTreeTableNode> tries) {
 
 		// add to this guy..
 		final OpTreeTableNode parent = new OpTreeTableNode("ops", "# @OpService ops",
@@ -634,14 +662,20 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * will be skipped. Ops with no namespace will be put in a
 	 * {@link #NO_NAMESPACE} category.
 	 */
-	private void createNodes(final OpTreeTableNode root) {
-		final OpTreeTableNode parent = new OpTreeTableNode("ops", "# @OpService ops",
+	private void createNodes() {
+		final OpTreeTableNode advParent = new OpTreeTableNode("ops", "# @OpService ops",
 						"net.imagej.ops.OpService");
-		root.add(parent);
+		final OpTreeTableNode smplParent = new OpTreeTableNode("ops", "# @OpService ops",
+						"net.imagej.ops.OpService");
+		advModel.getRoot().add(advParent);
+		smplModel.getRoot().add(smplParent);
 
 		// Map namespaces and ops to their parent tree node
-		final Map<String, OpTreeTableNode> namespaces =
+		final Map<String, OpTreeTableNode> advNamespaces =
 			new HashMap<>();
+		final Map<String, OpTreeTableNode> smplNamespaces =
+			new HashMap<>();
+		final Set<String> smplOps = new HashSet<>();
 
 		// Iterate over all ops
 		for (final OpInfo info : opService.infos()) {
@@ -656,7 +690,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				// There is one node per namespace.
 				// Then a general Op type node, the leaves of which are the actual
 				// implementations.
-				final OpTreeTableNode opType = buildOpHierarchy(parent, namespaces, pathToOp);
+				final OpTreeTableNode advOpType = buildOpHierarchy(advParent, advNamespaces, pathToOp);
+				final OpTreeTableNode smplOpType = buildOpHierarchy(smplParent, smplNamespaces, pathToOp);
 
 				final String delegateClass = info.cInfo().getDelegateClassName();
 				final String simpleName = OpUtils.simpleString(info.cInfo());
@@ -666,35 +701,87 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				final OpTreeTableNode opSignature = new OpTreeTableNode(simpleName, codeCall, delegateClass);
 				opSignature.setCommandInfo(info.cInfo());
 
-				final Trie trie = new Trie().removeOverlaps();
-				final Set<String> substrings = getSubstringsWithDots(delegateClass.toLowerCase(Locale.getDefault()));
-				for (final String substring : substrings) trie.addKeyword(substring);
-				tries.put(trie, opSignature);
+				final Trie advTrie = buildTries(delegateClass, '.');
+				advTries.put(advTrie, opSignature);
+				advOpType.add(opSignature);
 
-				opType.add(opSignature);
+				if (isSimple(pathToOp, simpleName, smplOps)) {
+					final Trie smplTrie = buildTries(simpleName);
+					smplTries.put(smplTrie, opSignature);
+					smplOpType.add(opSignature);
+				}
+
 				updateWidths(widths, simpleName, codeCall, delegateClass);
 			}
 		}
+
+		pruneEmptyNodes(smplParent);
 	}
 
 	/**
 	 * TODO
 	 */
-	private Set<String> getSubstringsWithDots(final String string) {
+	private Trie buildTries(final String rawDict, final char... delim) {
+		final Trie trie = new Trie().removeOverlaps();
+		final Set<String> substrings = getSubstringsWithDelim(rawDict.toLowerCase(Locale.getDefault()), delim);
+		for (final String substring : substrings)
+			trie.addKeyword(substring);
+
+		return trie;
+	}
+
+	/**
+	 * TODO
+	 */
+	private boolean isSimple(final String pathToOp, final String simpleName, final Set<String> smplOps) {
+		//FIXME
+		if (!smplOps.contains(simpleName) && pathToOp.contains("math")) {
+			smplOps.add(simpleName);
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Recursively any node that a) has no children, and b) has no "ReferenceClass" field
+	 *
+	 * @return true if this node should be removed from the child list.
+	 */
+	private boolean pruneEmptyNodes(final OpTreeTableNode node) {
+		boolean removeThis = node.getCodeCall().isEmpty();
+		final List<OpTreeTableNode> preservedChildren = new ArrayList<>();
+
+		for (final OpTreeTableNode child : node.getChildren()) {
+			if (!pruneEmptyNodes(child)) preservedChildren.add(child);
+		}
+
+		node.getChildren().retainAll(preservedChildren);
+
+		removeThis &= node.getChildren().isEmpty();
+
+		return removeThis;
+	}
+
+	/**
+	 * TODO
+	 */
+	private Set<String> getSubstringsWithDelim(final String string, final char... delims) {
 		final Set<String> substringsToCheck = new HashSet<>();
 
 		String strOfInterest = string;
 
-		int dotIndex = 0;
-		while (dotIndex >= 0) {
-			final int startIndex = dotIndex;
-			dotIndex = string.indexOf('.', dotIndex + 1);
+		for (final char delim : delims) {
+			int dotIndex = 0;
+			while (dotIndex >= 0) {
+				final int startIndex = dotIndex;
+				dotIndex = string.indexOf(delim, dotIndex + 1);
 
-			if (dotIndex < 0) {
-				strOfInterest = string.substring(startIndex, string.length());
-			}
-			else {
-				substringsToCheck.add(string.substring(startIndex, dotIndex + 1));
+				if (dotIndex < 0) {
+					strOfInterest = string.substring(startIndex, string.length());
+				} else {
+					substringsToCheck.add(string.substring(startIndex, dotIndex + 1));
+				}
 			}
 		}
 
@@ -787,6 +874,61 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			timer.stop();
 			timer = new Timer(HIDE_COOLDOWN, taskPerformer);
 			timer.start();
+		}
+	}
+
+	/**
+	 * TODO
+	 */
+	private class ModeButton extends JButton {
+		private final String simpleButtonText = "Advanced Mode";
+		private final String simpleToolTip = "<html>Recommended for advanced users<br/>"
+				+ " and developers<br/>"
+				+ "<ul><li>Browse <b>ALL</b> Ops</li>"
+				+ "<li>See Op parameters</li>"
+				+ "<li>See Op Javadoc</li></ul></html>";
+		private final String advancedButtonText = "Simple Mode";
+		private final String advancedToolTip = "<html>Recommended for new users<br/>"
+				+ " and non-developers</html>";
+
+		private final String simpleFilterLabel = "Filter Ops:  ";
+		private final String advancedFilterLabel = "Filter Ops by Class:  ";
+
+		public ModeButton() {
+			setState(simple);
+
+			addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (simple) switchToAdvanced();
+					else switchToSimple();
+
+					simple = !simple;
+
+					filterOps(searchField.getDocument());
+				}
+
+				private void switchToAdvanced() {
+					modeButton.setState(false);
+				}
+
+				private void switchToSimple() {
+					modeButton.setState(true);
+				}
+				
+			});
+		}
+
+		public void setState(final boolean simple) {
+			setText(simple ? simpleButtonText : advancedButtonText);
+			setToolTipText(simple ? simpleToolTip : advancedToolTip);
+			searchLabel.setText(simple ?simpleFilterLabel : advancedFilterLabel);
+			if (treeTable != null) {
+				cacheExpandedPaths(!simple);
+				treeTable.setTreeTableModel(simple ? smplModel : advModel);
+				restoreExpandedPaths(simple);
+			}
 		}
 	}
 
