@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -608,7 +609,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * nodes matched.
 	 */
 	private void createNodes(final OpTreeTableNode root, final String filter) {
-		final String filterLC = filter == null ? "" : filter.toLowerCase();
+		final Locale defaultLocale = Locale.getDefault();
+		final String filterLC = filter == null ? "" : filter.toLowerCase(defaultLocale);
 		final OpTreeTableNode parent = new OpTreeTableNode("ops", "# @OpService ops",
 						"net.imagej.ops.OpService");
 		root.add(parent);
@@ -638,7 +640,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				final OpTreeTableNode opCategory = getCategory(nsCategory, ops,
 					opName);
 
-				final String delegateClass = info.cInfo().getDelegateClassName().toLowerCase();
+				final String delegateClass = info.cInfo().getDelegateClassName();
 				final String simpleName = OpUtils.simpleString(info.cInfo());
 				final String codeCall = OpUtils.opCall(info.cInfo());
 
@@ -652,7 +654,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				}
 				else {
 					//NB: FILTERING here
-					int score = fuzzyScore(delegateClass, filterLC);
+					int score = fuzzyScore(delegateClass.toLowerCase(defaultLocale), filterLC);
 					if (score > maxScore) {
 						maxScore = score;
 						final List<OpTreeTableNode> bestNodes = new ArrayList<>();
