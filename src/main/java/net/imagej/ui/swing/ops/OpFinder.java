@@ -587,18 +587,24 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		filterOps(doc);
 	}
 
+	/**
+	 * TODO
+	 */
 	private void filterOps(final Document doc) {
 		try {
 			final String text = doc.getText(0, doc.getLength());
 
+			if (lastFilter != null) {
+				lastFilter.cancel(true);
+				progressBar.setValue(0);
+			}
+
 			if (text == null || text.isEmpty()) {
 				treeTable.setTreeTableModel(simple ? smplModel : advModel);
-				restoreExpandedPaths(simple);
+				restoreExpandedPaths(simple, true);
 			} else {
+				cacheExpandedPaths(simple);
 				final FilterRunner filterRunner = new FilterRunner(text);
-				if (lastFilter != null) {
-					lastFilter.cancel(true);
-				}
 				lastFilter = threadService.run(filterRunner);
 			}
 		} catch (final BadLocationException exc) {
@@ -607,9 +613,10 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * Expand all cached TreePaths and clear the cache.
+	 * Expand all cached TreePaths
+	 *TODO
 	 */
-	private void restoreExpandedPaths(final boolean isSimple) {
+	private void restoreExpandedPaths(final boolean isSimple, final boolean clearCache) {
 		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
 
 		if (paths.isEmpty()) {
@@ -620,9 +627,12 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			for (final TreePath path : paths) {
 				treeTable.expandPath(path);
 			}
+		}
 
+		if (clearCache) {
 			paths.clear();
 		}
+
 	}
 
 	/**
@@ -631,9 +641,6 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private void cacheExpandedPaths(final boolean isSimple) {
 		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
-
-		// If paths have already been cached we don't need to do anything.
-		if (!paths.isEmpty()) return;
 
 		// Find and cache the expanded paths
 		for (int i=0; i<treeTable.getRowCount(); i++) {
@@ -996,7 +1003,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			if (treeTable != null) {
 				cacheExpandedPaths(!simple);
 				treeTable.setTreeTableModel(simple ? smplModel : advModel);
-				restoreExpandedPaths(simple);
+				restoreExpandedPaths(simple, false);
 			}
 		}
 	}
