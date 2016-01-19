@@ -122,6 +122,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private boolean simple = true;
 	private ModeButton modeButton;
 	private JLabel searchLabel;
+	private boolean autoToggle = true;
 
 	// Off-EDT work
 	private Future<?> lastFilter;
@@ -207,7 +208,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		// Build the bottom panel
 		buildBottomPanel();
 
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainPane, detailsPane);
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainPane, null);
 		add(splitPane);
 
 		pack();
@@ -387,7 +388,6 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 								});
 							}
 						}
-
 					}
 				}
 			}
@@ -485,6 +485,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		detailsPane.setPreferredSize(new Dimension(DETAILS_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT));
+		detailsPane.setVisible(false);
 	}
 
 	/**
@@ -497,7 +498,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 		hideDetails = new ImageIcon(getClass().getResource("/icons/opbrowser/arrow_left.png"));
 		expandDetails = new ImageIcon(getClass().getResource("/icons/opbrowser/arrow_right.png"));
-		toggleDetailsButton = new JButton(hideDetails);
+		toggleDetailsButton = new JButton(expandDetails);
 		toggleDetailsButton.setToolTipText("Show / Hide Details");
 		toggleDetailsButton.addActionListener(this);
 		mainPane.add(toggleDetailsButton, "span, align right, w 32!, h 32!");
@@ -542,24 +543,34 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	@Override
 	public void actionPerformed(final ActionEvent e) {
 		if (e.getSource() == toggleDetailsButton) {
-			final boolean hide = detailsPane.isVisible();
-			if (hide) {
-				detailsPane.setPreferredSize(detailsPane.getSize());
-				splitPane.remove(detailsPane);
-				detailsPane.setVisible(false);
-				toggleDetailsButton.setIcon(expandDetails);
-			} else {
-				detailsPane.setVisible(true);
-				splitPane.add(detailsPane);
-				toggleDetailsButton.setIcon(hideDetails);
-			}
-
-			// Prevent left side from resizing
-			Component lc = splitPane.getLeftComponent();
-			lc.setPreferredSize(lc.getSize());
-
-			pack();
+			autoToggle = false;
+			toggleDetails();
 		}
+	}
+
+	/**
+	 * TODO
+	 */
+	private void toggleDetails() {
+		if (detailsPane == null) return;
+		final boolean hide = detailsPane.isVisible();
+
+		if (hide) {
+			detailsPane.setPreferredSize(detailsPane.getSize());
+			splitPane.remove(detailsPane);
+			detailsPane.setVisible(false);
+			toggleDetailsButton.setIcon(expandDetails);
+		} else {
+			detailsPane.setVisible(true);
+			splitPane.add(detailsPane);
+			toggleDetailsButton.setIcon(hideDetails);
+		}
+
+		// Prevent left side from resizing
+		Component lc = splitPane.getLeftComponent();
+		lc.setPreferredSize(lc.getSize());
+
+		pack();
 	}
 
 	// -- DocumentListener methods --
@@ -1005,6 +1016,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				treeTable.setTreeTableModel(simple ? smplModel : advModel);
 				restoreExpandedPaths(simple, false);
 			}
+
+			if (autoToggle) toggleDetails();
 		}
 	}
 
