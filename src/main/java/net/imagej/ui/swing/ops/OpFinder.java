@@ -76,6 +76,7 @@ import net.imagej.ops.Op;
 import net.imagej.ops.OpInfo;
 import net.imagej.ops.OpService;
 import net.imagej.ops.OpUtils;
+import net.imglib2.img.Img;
 import net.miginfocom.swing.MigLayout;
 
 import org.ahocorasick.trie.Emit;
@@ -123,6 +124,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private ModeButton modeButton;
 	private JLabel searchLabel;
 	private boolean autoToggle = true;
+	private Set<Class<?>> simpleInputs;
 
 	// Off-EDT work
 	private Future<?> lastFilter;
@@ -229,6 +231,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		advModel = new OpTreeTableModel(false);
 		smplModel = new OpTreeTableModel(true);
 		widths = new int[advModel.getColumnCount()];
+
+		buildSimpleInputs();
+
 		successTimer = new Timer(HIDE_COOLDOWN,  new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent evt) {
@@ -242,6 +247,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				progressBar.setVisible(false);
 			}
 		});
+	}
+
+	/**
+	 * TODO
+	 */
+	private void buildSimpleInputs() {
+		simpleInputs = new HashSet<>();
+		simpleInputs.add(Img.class);
 	}
 
 	/**
@@ -792,7 +805,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				final OpTreeTableNode smplOpType = buildOpHierarchy(smplParent, smplNamespaces, pathToOp);
 
 				final String delegateClass = info.cInfo().getDelegateClassName();
-				final String simpleName = OpUtils.simpleString(info.cInfo());
+				String simpleName = OpUtils.simpleString(info.cInfo());
 				final String codeCall = OpUtils.opCall(info.cInfo());
 
 				// Create a leaf node for this particular Op's signature
@@ -802,11 +815,13 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				final Trie advTrie = buildTries(delegateClass, '.');
 				advTries.put(advTrie, opSignature);
 				advOpType.add(opSignature);
+				simpleName = simplifyTypes(simpleName);
 
-				if (isSimple(pathToOp, simpleName, smplOps)) {
+				if (isSimple(info.cInfo(), simpleName, smplOps)) {
+					final OpTreeTableNode simpleOp = new OpTreeTableNode(simpleName, codeCall, delegateClass);
 					final Trie smplTrie = buildTries(simpleName);
-					smplTries.put(smplTrie, opSignature);
-					smplOpType.add(opSignature);
+					smplTries.put(smplTrie, simpleOp);
+					smplOpType.add(simpleOp);
 				}
 
 				updateWidths(widths, simpleName, codeCall, delegateClass);
@@ -814,6 +829,19 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		}
 
 		pruneEmptyNodes(smplParent);
+	}
+
+	/**
+	 * TODO
+	 */
+	private String simplifyTypes(String simpleName) {
+		simpleName = simpleName.replaceAll("ArrayImg|PlanarImg", "Img");
+		simpleName = simpleName.replaceAll("\\(int |\\(short |\\(long |\\(double |\\(float |\\(byte ", "(number ");
+		simpleName = simpleName.replaceAll(" int | short | long | double | float | byte ", " number ");
+		simpleName = simpleName.replaceAll(" [a-zA-Z0-9]*(\\?)?(,|\\))", "$1$2");
+		final int splitPoint = simpleName.substring(0, simpleName.indexOf('(')).lastIndexOf(' ');
+
+		return simpleName.substring(splitPoint + 1);
 	}
 
 	/**
@@ -831,11 +859,19 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	/**
 	 * TODO
 	 */
-	private boolean isSimple(final String pathToOp, final String simpleName, final Set<String> smplOps) {
-		//FIXME
-		if (!smplOps.contains(simpleName) && pathToOp.contains("math")) {
-			smplOps.add(simpleName);
-			return true;
+	private boolean isSimple(final CommandInfo info, final String simpleName, final Set<String> smplOps) {
+		if (!smplOps.contains(simpleName)) {
+			for (final ModuleItem<?> moduleItem : info.inputs()) {
+				final Class<?> inputType = moduleItem.getType();
+				for (final Class<?> acceptedClass : simpleInputs) {
+					if (acceptedClass.isAssignableFrom(inputType)) {
+						smplOps.add(simpleName);
+						return true;
+
+					}
+
+				}
+			}
 		}
 
 		return false;
@@ -968,13 +1004,13 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * TODO
 	 */
 	private class ModeButton extends JButton {
-		private final String simpleButtonText = "Advanced Mode";
+		private final String simpleButtonText = "Developer View";
 		private final String simpleToolTip = "<html>Recommended for advanced users<br/>"
 				+ " and developers<br/>"
 				+ "<ul><li>Browse <b>ALL</b> Ops</li>"
 				+ "<li>See Op parameters</li>"
 				+ "<li>See Op Javadoc</li></ul></html>";
-		private final String advancedButtonText = "Simple Mode";
+		private final String advancedButtonText = "User View";
 		private final String advancedToolTip = "<html>Recommended for new users<br/>"
 				+ " and non-developers</html>";
 
@@ -982,7 +1018,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		private final String advancedFilterLabel = "Filter Ops by Class:  ";
 
 		public ModeButton() {
-			setState(simple);
+			setLabels(simple);
 
 			addActionListener(new ActionListener() {
 
@@ -1007,10 +1043,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			});
 		}
 
-		public void setState(final boolean simple) {
+		public void setLabels(final boolean simple) {
 			setText(simple ? simpleButtonText : advancedButtonText);
 			setToolTipText(simple ? simpleToolTip : advancedToolTip);
 			searchLabel.setText(simple ?simpleFilterLabel : advancedFilterLabel);
+		}
+
+		public void setState(final boolean simple) {
+			setLabels(simple);
 			if (treeTable != null) {
 				cacheExpandedPaths(!simple);
 				treeTable.setTreeTableModel(simple ? smplModel : advModel);
