@@ -21,33 +21,14 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-
 package net.imagej.ui.swing.ops;
 
-import org.scijava.command.Command;
-import org.scijava.command.ContextCommand;
-import org.scijava.menu.MenuConstants;
-import org.scijava.plugin.Menu;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
+import net.imagej.ImageJService;
 
 /**
- * Simple command to create and show a new {@link OpFinder}.
- *
- * @author Mark Hiner <hinerm@gmail.com>
+ * @author Mark Hiner hinerm at gmail.com
  */
-@Plugin(type = Command.class, menu = { @Menu(
-	label = MenuConstants.PLUGINS_LABEL, weight = MenuConstants.PLUGINS_WEIGHT,
-	mnemonic = MenuConstants.PLUGINS_MNEMONIC), @Menu(label = "Utilities"),
-	@Menu(label = "Find Ops...", weight = 22, accelerator = "shift L") }, headless = false)
-public class FindOps extends ContextCommand {
+public interface OpFinderService extends ImageJService {
 
-	@Parameter
-	private OpFinderService opFinderService;
-	
-	@Override
-	public void run() {
-		opFinderService.showOpFinder();
-	}
-
+	void showOpFinder();
 }

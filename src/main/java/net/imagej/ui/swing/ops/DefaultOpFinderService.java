@@ -21,33 +21,42 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-
 package net.imagej.ui.swing.ops;
 
-import org.scijava.command.Command;
-import org.scijava.command.ContextCommand;
-import org.scijava.menu.MenuConstants;
-import org.scijava.plugin.Menu;
+
+import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.service.AbstractService;
+import org.scijava.service.Service;
 
-/**
- * Simple command to create and show a new {@link OpFinder}.
- *
- * @author Mark Hiner <hinerm@gmail.com>
- */
-@Plugin(type = Command.class, menu = { @Menu(
-	label = MenuConstants.PLUGINS_LABEL, weight = MenuConstants.PLUGINS_WEIGHT,
-	mnemonic = MenuConstants.PLUGINS_MNEMONIC), @Menu(label = "Utilities"),
-	@Menu(label = "Find Ops...", weight = 22, accelerator = "shift L") }, headless = false)
-public class FindOps extends ContextCommand {
+@Plugin(type = Service.class)
+public class DefaultOpFinderService extends AbstractService implements OpFinderService {
 
 	@Parameter
-	private OpFinderService opFinderService;
-	
+	private Context context;
+
+	private OpFinder opFinder;
+
 	@Override
-	public void run() {
-		opFinderService.showOpFinder();
+	public void showOpFinder() {
+		boolean initSize = opFinder == null || opFinder.isVisible() == false;
+
+		if (opFinder == null) {
+			makeOpFinder();
+		}
+
+		if (initSize) {
+			opFinder.setVisible(true);
+			opFinder.pack();
+			opFinder.setLocationRelativeTo(null); // center on screen
+		}
+		opFinder.requestFocus();
+	}
+
+	private synchronized void makeOpFinder() {
+		if (opFinder == null)
+			opFinder = new OpFinder(context);
 	}
 
 }
