@@ -189,7 +189,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private ThreadService threadService;
 
 	public OpFinder(final Context context) {
-		super("Viewing available Ops...   [shift + L]");
+		super("Op Finder   [shift + L]");
 		context.inject(this);
 
 		initialize();
@@ -438,7 +438,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		runButton.addActionListener(new RunButtonListener());
 
 		snippetButton.setToolTipText(
-				"<html>Copy the selected code snippet to your clipboard.<br />"
+				"<html>Copy the selected cell contents to your clipboard.<br />"
 						+ "You can also double-click a cell to copy its contents.</html>");
 		snippetButton.addActionListener(new CopyButtonListener());
 
