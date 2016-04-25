@@ -366,6 +366,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				"span, wrap, grow, w " + preferredWidth/2 + ":" + preferredWidth + ", h " + MAIN_WINDOW_HEIGHT);
 	}
 
+	/**
+	 * TODO
+	 */
 	private int getPreferredMainWidth() {
 		int preferredWidth = 0;
 		for (int i : widths)
@@ -375,6 +378,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
+	 * TODO
 	 */
 	private void buildTopPanel() {
 		final int searchWidth = 250;
@@ -415,7 +419,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * 
+	 * TODO
 	 */
 	private void buildDetailsPane() {
 		textPane = new JEditorPane("text/html", "Select an Op for more information");
@@ -428,6 +432,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
+	 * TODO
 	 */
 	private void buildBottomPanel() {
 		hideDetails = new ImageIcon(getClass().getResource("/icons/opbrowser/arrow_left.png"));
@@ -460,6 +465,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		}
 	}
 
+	/**
+	 * TODO
+	 */
 	@Override
 	public void actionPerformed(final ActionEvent e) {
 		if (e.getSource() == toggleDetailsButton) {
@@ -500,6 +508,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		filterOps(e);
 	}
 
+	/**
+	 * TODO
+	 */
 	private void filterOps(final DocumentEvent e) {
 		final Document doc = e.getDocument();
 		try {
@@ -757,6 +768,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		return nsCategory;
 	}
 
+	/**
+	 * TODO
+	 */
 	private OpTreeTableNode getSelectedNode() {
 		final int row = treeTable.getSelectedRow();
 		if (row < 0) return null;
@@ -764,16 +778,25 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		return getNodeAtRow(row);
 	}
 
+	/**
+	 * TODO
+	 */
 	private OpTreeTableNode getNodeAtRow(final int row) {
 		final TreePath path = treeTable.getPathForRow(row);
 		return path == null ? null : (OpTreeTableNode) path.getPath()[path.getPathCount() - 1];
 	}
 
+	/**
+	 * TODO
+	 */
 	public void setSuccessIcon(final ImageIcon icon) {
 		successLabel.setVisible(true);
 		successLabel.setIcon(icon);
 	}
 
+	/**
+	 * TODO
+	 */
 	private void queueHide() {
 		synchronized(timer) {
 			timer.stop();
@@ -845,6 +868,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			}
 		}
 
+		/**
+		 * TODO
+		 */
 		private String makeScript(final OpTreeTableNode node) throws NoSuchFieldException, SecurityException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 			final CommandInfo cInfo = node.getCommandInfo();
 			final StringBuffer sb = new StringBuffer();
