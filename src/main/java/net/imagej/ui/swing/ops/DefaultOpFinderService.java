@@ -23,7 +23,6 @@
  */
 package net.imagej.ui.swing.ops;
 
-
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -40,7 +39,7 @@ public class DefaultOpFinderService extends AbstractService implements OpFinderS
 
 	@Override
 	public void showOpFinder() {
-		boolean initSize = opFinder == null || opFinder.isVisible() == false;
+		final boolean initSize = opFinder == null || opFinder.isVisible() == false;
 
 		if (opFinder == null) {
 			makeOpFinder();

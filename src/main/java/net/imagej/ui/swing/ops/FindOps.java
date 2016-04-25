@@ -36,15 +36,15 @@ import org.scijava.plugin.Plugin;
  *
  * @author Mark Hiner <hinerm@gmail.com>
  */
-@Plugin(type = Command.class, menu = { @Menu(
-	label = MenuConstants.PLUGINS_LABEL, weight = MenuConstants.PLUGINS_WEIGHT,
-	mnemonic = MenuConstants.PLUGINS_MNEMONIC), @Menu(label = "Utilities"),
-	@Menu(label = "Find Ops...", weight = 22, accelerator = "shift L") }, headless = false)
+@Plugin(type = Command.class, menu = {
+		@Menu(label = MenuConstants.PLUGINS_LABEL, weight = MenuConstants.PLUGINS_WEIGHT, mnemonic = MenuConstants.PLUGINS_MNEMONIC),
+		@Menu(label = "Utilities"),
+		@Menu(label = "Find Ops...", weight = 22, accelerator = "shift L") }, headless = false)
 public class FindOps extends ContextCommand {
 
 	@Parameter
 	private OpFinderService opFinderService;
-	
+
 	@Override
 	public void run() {
 		opFinderService.showOpFinder();

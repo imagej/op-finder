@@ -34,7 +34,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	private String referenceClass = "";
 	private String codeCall = "";
 	private CommandInfo info;
-	private List<OpTreeTableNode> children = new ArrayList<>();
+	private final List<OpTreeTableNode> children = new ArrayList<>();
 
 	/**
 	 * <ul>
@@ -43,7 +43,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	 * <li>String 3: referenced class</li>
 	 * </ul>
 	 */
-	public OpTreeTableNode(String... fields) {
+	public OpTreeTableNode(final String... fields) {
 		if (fields.length > 0)
 			simpleName = fields[0];
 		if (fields.length > 1)
@@ -56,7 +56,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 		return simpleName;
 	}
 
-	public void setName(String simpleName) {
+	public void setName(final String simpleName) {
 		this.simpleName = simpleName;
 	}
 
@@ -64,7 +64,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 		return referenceClass;
 	}
 
-	public void setReferenceClass(String referenceClass) {
+	public void setReferenceClass(final String referenceClass) {
 		this.referenceClass = referenceClass;
 	}
 
@@ -72,7 +72,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 		return codeCall;
 	}
 
-	public void setCodeCall(String codeCall) {
+	public void setCodeCall(final String codeCall) {
 		this.codeCall = codeCall;
 	}
 
@@ -81,7 +81,7 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	}
 
 	public void add(final OpTreeTableNode child) {
-		int index = -(Collections.binarySearch(children, child)+1);
+		final int index = -(Collections.binarySearch(children, child) + 1);
 		children.add(index, child);
 	}
 

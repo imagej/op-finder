@@ -141,8 +141,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	private JEditorPane textPane;
 	private JScrollPane detailsPane;
 	private JButton toggleDetailsButton;
-	private JPanel mainPane;
-	private JSplitPane splitPane;
+	private final JPanel mainPane;
+	private final JSplitPane splitPane;
 	private JProgressBar progressBar;
 	private OpTreeTableModel advModel;
 	private OpTreeTableModel smplModel;
@@ -195,8 +195,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		initialize();
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		//NB top panel defines column count
-		mainPane = new JPanel(new MigLayout("", "[][][][][][][grow, right]","[grow]"));
+		// NB top panel defines column count
+		mainPane = new JPanel(new MigLayout("", "[][][][][][][grow, right]", "[grow]"));
 
 		// Build search panel
 		buildTopPanel();
@@ -218,7 +218,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void initialize() {
 		advExpandedPaths = new HashSet<>();
@@ -232,14 +232,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 		buildSimpleInputs();
 
-		successTimer = new Timer(HIDE_COOLDOWN,  new ActionListener() {
+		successTimer = new Timer(HIDE_COOLDOWN, new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent evt) {
 				successLabel.setVisible(false);
 			}
 		});
 
-		progressTimer = new Timer(HIDE_COOLDOWN,  new ActionListener() {
+		progressTimer = new Timer(HIDE_COOLDOWN, new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent evt) {
 				progressBar.setVisible(false);
@@ -256,7 +256,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void buildTreeTable() {
 		// Populate the nodes
@@ -268,7 +268,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			// http://stackoverflow.com/a/21281257/1027800
 			@Override
 			public String getToolTipText(final MouseEvent e) {
-				String tip = "";
+				final String tip = "";
 				final Point p = e.getPoint();
 				final int rowIndex = rowAtPoint(p);
 				final int colIndex = columnAtPoint(p);
@@ -276,28 +276,31 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				try {
 					final OpTreeTableNode n = getNodeAtRow(rowIndex);
 					if (n != null) {
-						switch (colIndex)
-						{
+						switch (colIndex) {
 						case 0:
 							String name;
-							if (rowIndex == 0) name = "all available ops";
-							else name = n.getName();
-							if (rowIndex > 0 && n.getCodeCall().isEmpty())
-							{
+							if (rowIndex == 0)
+								name = "all available ops";
+							else
+								name = n.getName();
+							if (rowIndex > 0 && n.getCodeCall().isEmpty()) {
 								final OpTreeTableNode firstChild = n.getChildren().get(0);
 								if (firstChild != null && firstChild.getChildren().isEmpty()) {
-									// If a child of this node is a leaf then this node
+									// If a child of this node is a leaf then
+									// this node
 									// is an Op node
 									name += " op";
 								}
 								// Otherwise this is a namespace
-								else name += " namespace";
+								else
+									name += " namespace";
 							}
 							return name;
-						default: return (String) treeTable.getValueAt(rowIndex, colIndex);
+						default:
+							return (String) treeTable.getValueAt(rowIndex, colIndex);
 						}
 					}
-				} catch (RuntimeException e1) {
+				} catch (final RuntimeException e1) {
 					// catch null pointer exception if mouse is over an empty
 					// line
 				}
@@ -311,7 +314,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		// http://stackoverflow.com/a/25918436/1027800
 		treeTable.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseClicked(final MouseEvent e) {
 				if (e.getClickCount() == 2) {
 					final Point p = e.getPoint();
 					final int rowIndex = treeTable.rowAtPoint(p);
@@ -370,7 +373,6 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 				}
 			}
 
-
 		});
 
 		// Space the columns slightly
@@ -385,7 +387,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		mainPane.add(
 				new JScrollPane(treeTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 						ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-				"span, wrap, grow, w " + preferredWidth/2 + ":" + preferredWidth + ", h " + MAIN_WINDOW_HEIGHT);
+				"span, wrap, grow, w " + preferredWidth / 2 + ":" + preferredWidth + ", h " + MAIN_WINDOW_HEIGHT);
 	}
 
 	/**
@@ -407,7 +409,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private int getPreferredMainWidth() {
 		int preferredWidth = 0;
-		for (int i : widths)
+		for (final int i : widths)
 			preferredWidth += (i + COLUMN_MARGIN);
 
 		return preferredWidth;
@@ -431,15 +433,15 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		// Build buttons
 		modeButton = new ModeButton();
 		final JButton runButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/play.png")));
-		final JButton snippetButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/paperclip.png")));
+		final JButton snippetButton = new JButton(
+				new ImageIcon(getClass().getResource("/icons/opbrowser/paperclip.png")));
 		final JButton wikiButton = new JButton(new ImageIcon(getClass().getResource("/icons/opbrowser/globe.png")));
 
 		runButton.setToolTipText("Run the selected Op");
 		runButton.addActionListener(new RunButtonListener());
 
-		snippetButton.setToolTipText(
-				"<html>Copy the selected cell contents to your clipboard.<br />"
-						+ "You can also double-click a cell to copy its contents.</html>");
+		snippetButton.setToolTipText("<html>Copy the selected cell contents to your clipboard.<br />"
+				+ "You can also double-click a cell to copy its contents.</html>");
 		snippetButton.addActionListener(new CopyButtonListener());
 
 		wikiButton.setToolTipText("Learn more about ImageJ Ops");
@@ -501,7 +503,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		progressBar.setValue(progress);
 		if (progress >= progressBar.getMaximum() || progress <= progressBar.getMinimum())
 			progressTimer.restart();
-		else progressTimer.stop();
+		else
+			progressTimer.stop();
 	}
 
 	@Override
@@ -510,8 +513,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		try {
 			if (SwingUtilities.isEventDispatchThread()) {
 				super.pack();
-			}
-			else {
+			} else {
 				SwingUtilities.invokeAndWait(new Runnable() {
 
 					@Override
@@ -520,8 +522,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 					}
 				});
 			}
-		}
-		catch (final Exception ie) {
+		} catch (final Exception ie) {
 			logService.error(ie);
 		}
 	}
@@ -547,7 +548,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * TODO
 	 */
 	private void toggleDetails() {
-		if (detailsPane == null) return;
+		if (detailsPane == null)
+			return;
 		final boolean hide = detailsPane.isVisible();
 
 		if (hide) {
@@ -563,7 +565,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 		if (isVisible()) {
 			// Prevent left side from resizing
-			Component lc = splitPane.getLeftComponent();
+			final Component lc = splitPane.getLeftComponent();
 			lc.setPreferredSize(lc.getSize());
 
 			pack();
@@ -620,8 +622,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * Expand all cached TreePaths
-	 *TODO
+	 * Expand all cached TreePaths TODO
 	 */
 	private void restoreExpandedPaths(final boolean isSimple, final boolean clearCache) {
 		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
@@ -629,8 +630,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		if (paths.isEmpty()) {
 			// expand top row by default
 			treeTable.expandRow(0);
-		}
-		else {
+		} else {
 			for (final TreePath path : paths) {
 				treeTable.expandPath(path);
 			}
@@ -643,14 +643,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * If they are not already cached, check which paths are expanded and
-	 * cache them for future restoration.
+	 * If they are not already cached, check which paths are expanded and cache
+	 * them for future restoration.
 	 */
 	private void cacheExpandedPaths(final boolean isSimple) {
 		final Set<TreePath> paths = isSimple ? smplExpandedPaths : advExpandedPaths;
 
 		// Find and cache the expanded paths
-		for (int i=0; i<treeTable.getRowCount(); i++) {
+		for (int i = 0; i < treeTable.getRowCount(); i++) {
 			if (treeTable.isExpanded(i))
 				paths.add(treeTable.getPathForRow(i));
 		}
@@ -659,9 +659,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	// -- Helper methods --
 
 	private class FilterRunner extends InterruptableRunner {
-		private String text;
+		private final String text;
 
-		public FilterRunner(final String text){
+		public FilterRunner(final String text) {
 			this.text = text;
 		}
 
@@ -673,15 +673,17 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 		@Override
 		public void run() {
-			OpTreeTableModel tempModel = new OpTreeTableModel(simple);
+			final OpTreeTableModel tempModel = new OpTreeTableModel(simple);
 			final OpTreeTableNode filtered = applyFilter(text.toLowerCase(Locale.getDefault()),
 					simple ? smplTries : advTries);
 
-			if (filtered == null) return;
+			if (filtered == null)
+				return;
 
 			tempModel.getRoot().add(filtered);
 
-			if (poll()) return;
+			if (poll())
+				return;
 
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -712,7 +714,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 			// How many top scores to keep
 			// A higher score means more "fuzziness"
-			int keep = 1;
+			final int keep = 1;
 			int count = 0;
 			double nextProgress = 0.05;
 
@@ -720,15 +722,16 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			// Each fragment scores ((2 * length) - 1)
 			for (final Trie trie : tries.keySet()) {
 				count++;
-				if (((double)count  / tries.keySet().size()) >= nextProgress) {
-					if (poll()) return null;
-					setProgress((int)(nextProgress * 100));
+				if (((double) count / tries.keySet().size()) >= nextProgress) {
+					if (poll())
+						return null;
+					setProgress((int) (nextProgress * 100));
 					nextProgress += 0.05;
 				}
 
 				final Collection<Emit> parse = trie.parseText(filter);
 				int score = 0;
-				for (Emit e : parse)
+				for (final Emit e : parse)
 					score += ((2 * e.getKeyword().length()) - 1);
 
 				// get the positional index of this key
@@ -776,18 +779,14 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 * {@link #NO_NAMESPACE} category.
 	 */
 	private void createNodes() {
-		final OpTreeTableNode advParent = new OpTreeTableNode("ops", "# @OpService ops",
-						"net.imagej.ops.OpService");
-		final OpTreeTableNode smplParent = new OpTreeTableNode("ops", "# @OpService ops",
-						"net.imagej.ops.OpService");
+		final OpTreeTableNode advParent = new OpTreeTableNode("ops", "# @OpService ops", "net.imagej.ops.OpService");
+		final OpTreeTableNode smplParent = new OpTreeTableNode("ops", "# @OpService ops", "net.imagej.ops.OpService");
 		advModel.getRoot().add(advParent);
 		smplModel.getRoot().add(smplParent);
 
 		// Map namespaces and ops to their parent tree node
-		final Map<String, OpTreeTableNode> advNamespaces =
-			new HashMap<>();
-		final Map<String, OpTreeTableNode> smplNamespaces =
-			new HashMap<>();
+		final Map<String, OpTreeTableNode> advNamespaces = new HashMap<>();
+		final Map<String, OpTreeTableNode> smplNamespaces = new HashMap<>();
 		final Set<String> smplOps = new HashSet<>();
 
 		// Iterate over all ops
@@ -796,12 +795,13 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			final String opName = getName(info.getSimpleName(), info.getName());
 
 			if (!opName.isEmpty()) {
-				final String namespacePath = getName(info.getNamespace(),NO_NAMESPACE);
+				final String namespacePath = getName(info.getNamespace(), NO_NAMESPACE);
 				final String pathToOp = namespacePath + "." + opName;
 
 				// Build the node path to this op.
 				// There is one node per namespace.
-				// Then a general Op type node, the leaves of which are the actual
+				// Then a general Op type node, the leaves of which are the
+				// actual
 				// implementations.
 				final OpTreeTableNode advOpType = buildOpHierarchy(advParent, advNamespaces, pathToOp);
 				final OpTreeTableNode smplOpType = buildOpHierarchy(smplParent, smplNamespaces, pathToOp);
@@ -879,7 +879,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * Recursively any node that a) has no children, and b) has no "ReferenceClass" field
+	 * Recursively any node that a) has no children, and b) has no
+	 * "ReferenceClass" field
 	 *
 	 * @return true if this node should be removed from the child list.
 	 */
@@ -888,7 +889,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		final List<OpTreeTableNode> preservedChildren = new ArrayList<>();
 
 		for (final OpTreeTableNode child : node.getChildren()) {
-			if (!pruneEmptyNodes(child)) preservedChildren.add(child);
+			if (!pruneEmptyNodes(child))
+				preservedChildren.add(child);
 		}
 
 		node.getChildren().retainAll(preservedChildren);
@@ -931,8 +933,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		return substringsToCheck;
 	}
 
-	private OpTreeTableNode buildOpHierarchy(final OpTreeTableNode parent, final Map<String, OpTreeTableNode> namespaces,
-			final String namespace) {
+	private OpTreeTableNode buildOpHierarchy(final OpTreeTableNode parent,
+			final Map<String, OpTreeTableNode> namespaces, final String namespace) {
 
 		final StringBuilder sb = new StringBuilder();
 
@@ -953,10 +955,11 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	}
 
 	/**
-	 * Helper method to update the widths array to track the longest strings in each column.
+	 * Helper method to update the widths array to track the longest strings in
+	 * each column.
 	 */
-	private void updateWidths(int[] colWidths, String... colContents) {
-		for (int i=0; i<Math.min(colWidths.length, colContents.length); i++) {
+	private void updateWidths(final int[] colWidths, final String... colContents) {
+		for (int i = 0; i < Math.min(colWidths.length, colContents.length); i++) {
 			colWidths[i] = Math.max(colWidths[i], colContents[i].length());
 		}
 	}
@@ -989,14 +992,15 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 	/**
 	 * Helper method to get a properly formatted name. {@code name} is tried
-	 * first, then {@code backupName} if needed (i.e. {@code name} is {@code null}
-	 * or empty).
+	 * first, then {@code backupName} if needed (i.e. {@code name} is
+	 * {@code null} or empty).
 	 * <p>
 	 * The resulting string is trimmed and set to lowercase.
 	 * </p>
 	 */
 	private String getName(String name, final String backupName) {
-		if (name == null || name.isEmpty()) name = backupName;
+		if (name == null || name.isEmpty())
+			name = backupName;
 
 		return name == null ? "" : name.trim();
 	}
@@ -1006,7 +1010,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private OpTreeTableNode getSelectedNode() {
 		final int row = treeTable.getSelectedRow();
-		if (row < 0) return null;
+		if (row < 0)
+			return null;
 
 		return getNodeAtRow(row);
 	}
@@ -1055,7 +1060,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			addActionListener(new ActionListener() {
 
 				@Override
-				public void actionPerformed(ActionEvent e) {
+				public void actionPerformed(final ActionEvent e) {
 					setState(!simple);
 				}
 			});
@@ -1064,7 +1069,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		public void setLabels(final boolean simple) {
 			setIcon(simple ? useView : devView);
 			setToolTipText(toolTip);
-			searchLabel.setText(simple ?simpleFilterLabel : advancedFilterLabel);
+			searchLabel.setText(simple ? simpleFilterLabel : advancedFilterLabel);
 		}
 
 	}
@@ -1109,7 +1114,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		/**
 		 * TODO
 		 */
-		private String makeScript(final CommandInfo cInfo) throws NoSuchFieldException, SecurityException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+		private String makeScript(final CommandInfo cInfo) throws NoSuchFieldException, SecurityException,
+				InstantiationException, IllegalAccessException, ClassNotFoundException {
 			final StringBuffer sb = new StringBuffer();
 			sb.append("# @OpService ops\n");
 			int i = 1;
@@ -1153,9 +1159,12 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 			String toCopy;
 
-			if (rowIndex < 0) toCopy = "";
-			else if (colIndex < 0) toCopy = getSelectedNode().getCodeCall();
-			else toCopy = treeTable.getValueAt(rowIndex, colIndex).toString();
+			if (rowIndex < 0)
+				toCopy = "";
+			else if (colIndex < 0)
+				toCopy = getSelectedNode().getCodeCall();
+			else
+				toCopy = treeTable.getValueAt(rowIndex, colIndex).toString();
 
 			if (toCopy.isEmpty()) {
 				selectFail();
@@ -1171,9 +1180,9 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 	private class HTMLFetcher extends InterruptableRunner {
 
-		private String url;
-		private String requestedClass;
-		private StringBuilder sb;
+		private final String url;
+		private final String requestedClass;
+		private final StringBuilder sb;
 
 		public HTMLFetcher(final StringBuilder sb, final String url, final String requestedClass) {
 			this.url = url;
@@ -1185,7 +1194,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 		public void run() {
 			try {
 				final org.jsoup.nodes.Document doc = Jsoup.connect(sb.toString()).get();
-				Elements elements = doc.select("div.header");
+				final Elements elements = doc.select("div.header");
 				elements.addAll(doc.select("div.contentContainer"));
 				synchronized (elementsMap) {
 					elementsMap.put(url, elements.html());
@@ -1195,18 +1204,19 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 					elementsMap.put(url, "Javadoc not available for: " + requestedClass);
 				}
 			}
-			if (poll()) return;
+			if (poll())
+				return;
 			textPane.setText(elementsMap.get(url));
 			scrollToTop();
 
 			stop();
 		}
-		
+
 	}
 
 	private abstract class InterruptableRunner implements Runnable {
 		private boolean stop = false;
-	
+
 		public synchronized boolean poll() {
 			return stop;
 		}
