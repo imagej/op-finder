@@ -24,7 +24,14 @@
 package net.imagej.ui.swing.ops;
 
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
+import org.jdesktop.swingx.treetable.TreeTableModel;
 
+/**
+ * {@link TreeTableModel} implementation with columns and API tailored for
+ * ImageJ Ops usage.
+ *
+ * @author Mark Hiner
+ */
 public class OpTreeTableModel extends AbstractTreeTableModel {
 
 	// -- Constants --
@@ -43,9 +50,17 @@ public class OpTreeTableModel extends AbstractTreeTableModel {
 		this.simple = simple;
 	}
 
+	// -- OpTreeTableModel Methods --
+
+	/**
+	 * @return Whether columns are tailored for users (if {@code true}) or
+	 *         developers (if {@code false}).
+	 */
 	public boolean isSimple() {
 		return simple;
 	}
+
+	// -- TreeTableModel Methods --
 
 	@Override
 	public int getColumnCount() {

@@ -32,7 +32,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 /**
- * Simple command to create and show a new {@link OpFinder}.
+ * Basic {@link Command} entry point for the {@link OpFinder}.
  *
  * @author Mark Hiner <hinerm@gmail.com>
  */

@@ -27,8 +27,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import net.imagej.ops.Namespace;
+import net.imagej.ops.Op;
+
+import org.jdesktop.swingx.treetable.TreeTableNode;
 import org.scijava.command.CommandInfo;
 
+/**
+ * {@link TreeTableNode} implementation with tailored for ImageJ Ops usage. In
+ * the tree structure built with these nodes, leaves correspond to concrete
+ * {@link Op}s. Intermediate nodes are {@link Namespace}s.
+ *
+ * @author Mark Hiner
+ */
 public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	private String simpleName = "";
 	private String referenceClass = "";
@@ -36,7 +47,12 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 	private CommandInfo info;
 	private final List<OpTreeTableNode> children = new ArrayList<>();
 
+	// -- Constructor --
+
 	/**
+	 * Varargs constructor. Positions are assigned in the following
+	 * order:
+	 * 
 	 * <ul>
 	 * <li>String 1: display name</li>
 	 * <li>String 2: code call</li>
@@ -52,50 +68,87 @@ public class OpTreeTableNode implements Comparable<OpTreeTableNode> {
 			referenceClass = fields[2];
 	}
 
+	// -- OpTreeTableNode Methods --
+
+	/**
+	 * @return The base name for this node
+	 */
 	public String getName() {
 		return simpleName;
 	}
 
+	/**
+	 * Set the name for this node
+	 */
 	public void setName(final String simpleName) {
 		this.simpleName = simpleName;
 	}
 
+	/**
+	 * @return The {@link Op} class referenced by this node.
+	 */
 	public String getReferenceClass() {
 		return referenceClass;
 	}
 
+	/**
+	 * Sets the {@link Op} class referenced by this node.
+	 */
 	public void setReferenceClass(final String referenceClass) {
 		this.referenceClass = referenceClass;
 	}
 
+	/**
+	 * @return The script snippet to invoke the {@link Op} referenced by this
+	 *         node.
+	 */
 	public String getCodeCall() {
 		return codeCall;
 	}
 
+	/**
+	 * Set the script snippet to invoke the {@link Op} referenced by this node.
+	 */
 	public void setCodeCall(final String codeCall) {
 		this.codeCall = codeCall;
 	}
 
+	/**
+	 * @return A list of related nodes if this is actually a {@link Namespace}
+	 *         node.
+	 */
 	public List<OpTreeTableNode> getChildren() {
 		return children;
 	}
 
+	/**
+	 * Add a child to this node.
+	 */
 	public void add(final OpTreeTableNode child) {
 		final int index = -(Collections.binarySearch(children, child) + 1);
 		children.add(index, child);
 	}
 
-	@Override
-	public String toString() {
-		return getName();
-	}
-
+	/**
+	 * Sets the {@link CommandInfo} corresponding to the {@link Op} of this
+	 * node.
+	 */
 	public void setCommandInfo(final CommandInfo info) {
 		this.info = info;
 	}
 
+	/**
+	 * @return The {@link CommandInfo} for this node.
+	 */
 	public CommandInfo getCommandInfo() {
 		return info;
+	}
+
+	// -- TreeTableNode Methods --
+
+	@Override
+	public String toString() {
+		return getName();
 	}
 
 	// -- Comparable api --

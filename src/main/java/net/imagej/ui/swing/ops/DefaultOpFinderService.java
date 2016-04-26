@@ -29,6 +29,12 @@ import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 
+/**
+ * Default implementation of the {@link OpFinderService}. Manages an
+ * {@link OpFinder} instance.
+ *
+ * @author Mark Hiner
+ */
 @Plugin(type = Service.class)
 public class DefaultOpFinderService extends AbstractService implements OpFinderService {
 

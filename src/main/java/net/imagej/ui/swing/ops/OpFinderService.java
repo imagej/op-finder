@@ -25,8 +25,16 @@ package net.imagej.ui.swing.ops;
 
 import net.imagej.ImageJService;
 
+import org.scijava.Context;
+import org.scijava.service.Service;
+
 /**
- * @author Mark Hiner hinerm at gmail.com
+ * {@link Service} for managing the UI elements relating to the {@link FindOps}
+ * command. Using a {@code Service} for this purpose effectively makes the UI
+ * components singletons within the {@link Context}, so they do not need to
+ * be recreated on subsequent runs.
+ *
+ * @author Mark Hiner
  */
 public interface OpFinderService extends ImageJService {
 
