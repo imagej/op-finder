@@ -27,9 +27,16 @@ import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 public class OpTreeTableModel extends AbstractTreeTableModel {
 
+	// -- Constants --
+
+	private static final String[] DEV_COLUMNS = { "Op signature", "Code snippet", "Defined in class" };
+	private static final String[] USER_COLUMNS = { "Available Ops" };
+
+	// Private fields
+
 	private final boolean simple;
-	private final String[] advancedColumns = { "Op signature", "Code snippet", "Defined in class" };
-	private final String[] simpleColumns = { "Available Ops" };
+
+	// -- Constructor --
 
 	public OpTreeTableModel(final boolean simple) {
 		root = new OpTreeTableNode();
@@ -49,11 +56,11 @@ public class OpTreeTableModel extends AbstractTreeTableModel {
 	public String getColumnName(final int column) {
 		switch (column) {
 		case 0:
-			return isSimple() ? simpleColumns[0] : advancedColumns[0];
+			return isSimple() ? USER_COLUMNS[0] : DEV_COLUMNS[0];
 		case 1:
-			return advancedColumns[1];
+			return DEV_COLUMNS[1];
 		case 2:
-			return advancedColumns[2];
+			return DEV_COLUMNS[2];
 		default:
 			return "Unknown";
 		}
