@@ -853,13 +853,22 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 	/**
 	 * HACK
-	 * Perform string replacements to simplify names of parameter types.
+	 * Perform string replacements to simplify names of Op parameters.
 	 */
 	private String simplifyTypes(String simpleName) {
-		simpleName = simpleName.replaceAll("ArrayImg|PlanarImg", "Img");
-		simpleName = simpleName.replaceAll("\\(int |\\(short |\\(long |\\(double |\\(float |\\(byte ", "(number ");
-		simpleName = simpleName.replaceAll(" int | short | long | double | float | byte ", " number ");
-		simpleName = simpleName.replaceAll(" [a-zA-Z0-9]*(\\?)?(,|\\))", "$1$2");
+		// The goal is to boil down all parameter to "Image" or "Number" labels for display purposes.
+		simpleName = simpleName.replaceAll("ArrayImg|PlanarImg|RandomAccessibleInterval|IterableInterval|ImgPlus|Img|Dataset|Histogram1d", "Image");
+		simpleName = simpleName.replaceAll("int|short|long|double|float|byte|RealType", "Number");
+
+		// Remove optional parameters
+		simpleName = simpleName.replaceAll("[a-zA-Z0-9]+(\\[\\])? [a-zA-Z0-9]+\\?", "");
+
+		// Clean up variable separators from removed optional params
+		simpleName = simpleName.replaceAll(", (, )+", ", "); // multiple adjacent optional params
+		simpleName = simpleName.replaceAll("(, )+(\\))", "$2"); // last param is optional
+		simpleName = simpleName.replaceAll("(\\()(, )+", "$1"); // first param is optional
+
+		// Remove the return variable
 		final int splitPoint = simpleName.substring(0, simpleName.indexOf('(')).lastIndexOf(' ');
 
 		return simpleName.substring(splitPoint + 1);
