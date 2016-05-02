@@ -136,6 +136,11 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	public static final String BASE_JAVADOC_URL = "http://javadoc.imagej.net/ImageJ/";
 	public static final String SIMPLE_KEY = "net.imagej.ui.swing.ops.opfinder.simple";
 
+	// HACK -- these patterns are used to unify image and numeric classes in Ops.
+	public static final String IMG_REGEX = "ArrayImg|PlanarImg|RandomAccessibleInterval|IterableInterval|Img|Histogram1d";
+	public static final String IMGPLUS_REGEX = "ImgPlus|Dataset";
+	public static final String NUMBER_REGEX = "int|short|long|double|float|byte|RealType";
+
 	// -- Fields --
 
 	// Simple mode
@@ -848,6 +853,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private void buildSimpleInputs() {
 		simpleFilterClasses = new HashSet<>();
+		// Only Img and things convertible to Img will be considered
 		simpleFilterClasses.add(Img.class);
 	}
 
@@ -857,8 +863,8 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	 */
 	private String simplifyTypes(String simpleName) {
 		// The goal is to boil down all parameter to "Image" or "Number" labels for display purposes.
-		simpleName = simpleName.replaceAll("ArrayImg|PlanarImg|RandomAccessibleInterval|IterableInterval|ImgPlus|Img|Dataset|Histogram1d", "Image");
-		simpleName = simpleName.replaceAll("int|short|long|double|float|byte|RealType", "Number");
+		simpleName = simpleName.replaceAll(IMG_REGEX + "|" + IMGPLUS_REGEX, "Image");
+		simpleName = simpleName.replaceAll(NUMBER_REGEX, "Number");
 
 		// Remove optional parameters
 		simpleName = simpleName.replaceAll("[a-zA-Z0-9]+(\\[\\])? [a-zA-Z0-9]+\\?", "");
@@ -1410,15 +1416,57 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			final StringBuffer sb = new StringBuffer();
 			// Add @Parameters for the OpService and each command input.
 			sb.append("# @OpService ops\n");
-			int i = 1;
+
+			final String imgRegex = ".*" + IMG_REGEX + ".*";
+			final String imgPlusRegex = ".*" + IMGPLUS_REGEX + ".*";
+
+			final List<String> inputNames = new ArrayList<>();
 			for (final ModuleItem<?> in : cInfo.inputs()) {
 				if (in.isRequired()) {
 					sb.append("# @");
-					sb.append(in.getType().getName());
-					sb.append(" p");
-					sb.append(i++);
+					// HACK - Use ImgPlus inputs for any "image" type
+					// This avoids problems, e.g. not finding an available ArrayImg
+					final String type = in.getType().getName();
+					final String name = "input_" + in.getName();
+					inputNames.add(name);
+
+					if (type.matches(imgPlusRegex)) sb.append("ImgPlus");
+					else if (type.matches(imgRegex)) sb.append("Img");
+					else sb.append(type);
+
+					sb.append(" ");
+					sb.append(name);
+					sb.append(" ");
 					sb.append("\n");
 				}
+			}
+
+			String outType = "";
+			String outName = "";
+			// If we have exactly one OUTPUT type, annotate it
+			for (final ModuleItem<?> out : cInfo.outputs()) {
+				if (outType.isEmpty()) {
+					outType = out.getType().getName();
+					outName = out.getName();
+					// HACK - filter image types out
+					if (outType.matches(imgPlusRegex)) outType = "ImgPlus";
+					else if (outType.matches(imgRegex)) outType = "Img";
+				}
+				else {
+					outType = null;
+					break;
+				}
+			}
+
+			// Declare and set the OUTPUT type if there was one
+			if (outType != null && !outType.isEmpty()) {
+				sb.append("# @OUTPUT ");
+				sb.append(outType);
+				sb.append(" ");
+				sb.append(outName);
+				sb.append("\n");
+				sb.append(outName);
+				sb.append(" = ");
 			}
 
 			// Call the Op via ops.run(OpName, params..)
@@ -1426,13 +1474,10 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			sb.append(OpUtils.getOpName(cInfo));
 			sb.append("\"");
 
-			i = 1;
 			// Append the Parameter inputs to the Op call
-			for (final ModuleItem<?> in : cInfo.inputs()) {
-				if (in.isRequired()) {
-					sb.append(", p");
-					sb.append(i++);
-				}
+			for (final String name : inputNames) {
+				sb.append(", ");
+				sb.append(name);
 			}
 			sb.append(")\n");
 
