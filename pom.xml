@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>op-finder</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.1-SNAPSHOT</version>
 
 	<name>Op Finder</name>
 	<description>Interactive UI component for browsing and running available Ops.</description>
