@@ -22,6 +22,29 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<url>http://imagej.net/User:Rueden</url>
+			<roles>
+				<role>lead</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Mark Hiner</name>
+			<url>http://imagej.net/User:Hinerm</url>
+			<roles><role>founder</role></roles>
+			<properties><id>hinerm</id></properties>
+		</contributor>
+	</contributors>
+
 	<scm>
 		<connection>scm:git:git://github.com/imagej/op-finder</connection>
 		<developerConnection>scm:git:git@github.com:imagej/op-finder</developerConnection>
@@ -116,5 +139,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
