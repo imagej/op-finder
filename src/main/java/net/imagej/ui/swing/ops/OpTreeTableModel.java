@@ -2,9 +2,8 @@
  * #%L
  * Op Finder plugin for ImageJ.
  * %%
- * Copyright (C) 2009 - 2016 Board of Regents of the University of Wisconsin-Madison,
- *           Broad Institute of MIT and Harvard,
- *           and Max Planck Institute of Molecular Cell Biology and Genetics.
+ * Copyright (C) 2009 - 2016 Board of Regents of the University of
+ * Wisconsin-Madison.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
