@@ -3,17 +3,24 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>net.imagej</groupId>
-		<artifactId>pom-imagej</artifactId>
-		<version>15.6.0</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>12.0.0</version>
 		<relativePath />
 	</parent>
 
+	<groupId>net.imagej</groupId>
 	<artifactId>op-finder</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
 
 	<name>Op Finder</name>
 	<description>Interactive UI component for browsing and running available Ops.</description>
+	<url>http://imagej.net/Op_Finder</url>
+	<inceptionYear>2009</inceptionYear>
+	<organization>
+		<name>ImageJ</name>
+		<url>http://imagej.net/</url>
+	</organization>
 	<licenses>
 		<license>
 			<name>GNU General Public License v3+</name>
@@ -45,6 +52,13 @@
 		</contributor>
 	</contributors>
 
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
 	<scm>
 		<connection>scm:git:git://github.com/imagej/op-finder</connection>
 		<developerConnection>scm:git:git@github.com:imagej/op-finder</developerConnection>
@@ -59,6 +73,14 @@
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/Op-Finder/</url>
 	</ciManagement>
+
+	<properties>
+		<package-name>net.imagej.ui.swing.ops</package-name>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Board of Regents of the University of
+Wisconsin-Madison.</license.copyrightOwners>
+		<license.projectName>Op Finder plugin for ImageJ.</license.projectName>
+	</properties>
 
 	<repositories>
 		<repository>
@@ -111,32 +133,5 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.7.2</version>
 		</dependency>
-
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<packageName>net.imagej.ui.swing.ops</packageName>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<configuration>
-					<licenseName>gpl_v3</licenseName>
-					<organizationName>Board of Regents of the University of Wisconsin-Madison,
-          Broad Institute of MIT and Harvard,
-          and Max Planck Institute of Molecular Cell Biology and Genetics.</organizationName>
-					<projectName>Op Finder plugin for ImageJ.</projectName>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>
