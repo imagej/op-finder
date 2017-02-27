@@ -70,8 +70,8 @@
 		<url>https://github.com/imagej/op-finder/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/Op-Finder/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/imagej/op-finder</url>
 	</ciManagement>
 
 	<properties>
