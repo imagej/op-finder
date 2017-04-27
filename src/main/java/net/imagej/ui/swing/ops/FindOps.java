@@ -33,7 +33,7 @@ import org.scijava.plugin.Plugin;
 /**
  * Basic {@link Command} entry point for the {@link OpFinder}.
  *
- * @author Mark Hiner <hinerm@gmail.com>
+ * @author Mark Hiner
  */
 @Plugin(type = Command.class, menu = {
 		@Menu(label = MenuConstants.PLUGINS_LABEL, weight = MenuConstants.PLUGINS_WEIGHT, mnemonic = MenuConstants.PLUGINS_MNEMONIC),

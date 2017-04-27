@@ -118,7 +118,7 @@ import org.scijava.thread.ThreadService;
  * expanded/collapsed as desired.
  * </p>
  *
- * @author Mark Hiner <hinerm@gmail.com>
+ * @author Mark Hiner
  */
 @SuppressWarnings("serial")
 public class OpFinder extends JFrame implements DocumentListener, ActionListener {
