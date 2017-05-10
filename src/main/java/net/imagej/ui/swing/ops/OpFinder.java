@@ -46,7 +46,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.script.ScriptException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
@@ -215,7 +214,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 	// -- Constructor --
 
 	public OpFinder(final Context context) {
-		super("Op Finder   [shift + L]");
+		super("Op Finder");
 		context.inject(this);
 
 		initialize();
@@ -1401,7 +1400,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 			try {
 				final String script = makeScript(cInfo);
 				scriptService.run("op_browser.py", script, true);
-			} catch (IOException | ScriptException | NoSuchFieldException | SecurityException | InstantiationException
+			} catch (NoSuchFieldException | SecurityException | InstantiationException
 					| IllegalAccessException | ClassNotFoundException exc) {
 				logService.error(exc);
 			}
