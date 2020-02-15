@@ -84,7 +84,10 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 
+		<swingx.version>1.6.1</swingx.version>
 		<miglayout-swing.version>5.2</miglayout-swing.version>
+		<ahocorasick.version>0.2.4</ahocorasick.version>
+		<jsoup.version>1.7.2</jsoup.version>
 	</properties>
 
 	<repositories>
@@ -127,7 +130,7 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 			<groupId>org.swinglabs</groupId>
 			<artifactId>swingx</artifactId>
-			<version>1.6.1</version>
+			<version>${swingx.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.miglayout</groupId>
@@ -137,12 +140,12 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 				<groupId>org.ahocorasick</groupId>
 				<artifactId>ahocorasick</artifactId>
-				<version>0.2.4</version>
+				<version>${ahocorasick.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.7.2</version>
+			<version>${jsoup.version}</version>
 		</dependency>
 	</dependencies>
 </project>
