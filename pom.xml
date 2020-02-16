@@ -11,7 +11,7 @@
 
 	<groupId>net.imagej</groupId>
 	<artifactId>op-finder</artifactId>
-	<version>0.1.4-SNAPSHOT</version>
+	<version>0.1.4</version>
 
 	<name>Op Finder</name>
 	<description>Interactive UI component for browsing and running available Ops.</description>
@@ -62,7 +62,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/imagej/op-finder</connection>
 		<developerConnection>scm:git:git@github.com:imagej/op-finder</developerConnection>
-		<tag>HEAD</tag>
+		<tag>op-finder-0.1.4</tag>
 		<url>https://github.com/imagej/op-finder</url>
 	</scm>
 	<issueManagement>
