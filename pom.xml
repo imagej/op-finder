@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>27.0.1</version>
+		<version>28.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -85,9 +85,11 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 
 		<swingx.version>1.6.1</swingx.version>
-		<miglayout-swing.version>5.2</miglayout-swing.version>
 		<ahocorasick.version>0.2.4</ahocorasick.version>
 		<jsoup.version>1.7.2</jsoup.version>
+
+		<miglayout-swing.version>5.2</miglayout-swing.version>
+		<scijava-search.version>0.7.0</scijava-search.version>
 	</properties>
 
 	<repositories>
@@ -106,12 +108,6 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-ops</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>com.miglayout</groupId>
-					<artifactId>miglayout</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- ImgLib2 dependencies -->
