@@ -11,7 +11,7 @@
 
 	<groupId>net.imagej</groupId>
 	<artifactId>op-finder</artifactId>
-	<version>0.1.4-SNAPSHOT</version>
+	<version>0.1.5-SNAPSHOT</version>
 
 	<name>Op Finder</name>
 	<description>Interactive UI component for browsing and running available Ops.</description>
