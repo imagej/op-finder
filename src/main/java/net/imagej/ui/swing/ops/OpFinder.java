@@ -847,7 +847,7 @@ public class OpFinder extends JFrame implements DocumentListener, ActionListener
 
 	/**
 	 * HACK
-	 * Build the whitelist of classes that we will display in the simple view.
+	 * Build the allowlist of classes that we will display in the simple view.
 	 */
 	private void buildSimpleInputs() {
 		simpleFilterClasses = new HashSet<>();
