@@ -1,3 +1,5 @@
+[![](https://travis-ci.org/imagej/op-finder.svg?branch=master)](https://travis-ci.org/imagej/op-finder)
+
 # The Op Finder
 
 Provides a graphical utility for browsing all available Ops. This tool is designed to help users and developers learn about and experiment with the Ops framework.
