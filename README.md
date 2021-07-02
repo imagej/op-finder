@@ -1,4 +1,4 @@
-[![](https://travis-ci.org/imagej/op-finder.svg?branch=master)](https://travis-ci.org/imagej/op-finder)
+[![](https://github.com/imagej/op-finder/actions/workflows/build-main.yml/badge.svg)](https://github.com/imagej/op-finder/actions/workflows/build-main.yml)
 
 # The Op Finder
 
